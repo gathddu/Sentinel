@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 pcap = "2"
+etherparse = "0.16"
