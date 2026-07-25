@@ -1,6 +1,7 @@
 mod capture;
 mod rules;
 mod engine;
+mod alert;
 
 use etherparse::SlicedPacket;
 
@@ -52,12 +53,18 @@ fn main() {
         let hits = engine::inspect(packet.data, &rules);
 
         for rule in hits {
-                alert_count += 1;
-                println!(
-                    "[ALERT] [{}] [{}] {} | {}:{} -> {}:{} | payload: {} bytes",
-                    rule.severity, rule.id, rule.name,
-                    src_ip, src_port, dst_ip, dst_port, packet.data.len()
-                );
+            alert_count += 1;
+            let a = alert::Alert::new(
+                rule.id,
+                &rule.name,
+                &rule.severity,
+                &src_ip,
+                src_port,
+                &dst_ip,
+                dst_port,
+                packet.data.len(),
+            );
+            println!("{}", a.to_json());
         }
 
         if packet_count % 1000 == 0 {
