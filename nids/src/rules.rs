@@ -1,50 +1,27 @@
+use serde::Deserialize;
+use std::fs;
+
 /// detection rule: if the payload contains this pattern, fire an alert
+#[derive(Deserialize)]
 pub struct Rule {
     pub id: u32,
-    pub name: &'static str,
-    pub pattern: &'static [u8],
-    pub severity: &'static str,
+    pub name: String,
+    pub pattern: String,
+    pub severity: String,
 }
 
-/// load the ruleset.
-/// hardcoded for now
-pub fn load() -> Vec<Rule> {
-    vec![
-        Rule {
-            id: 1001,
-            name: "SQL Injection attempt",
-            pattern: b"' OR '1'='1",
-            severity: "CRITICAL",
-        },
-        Rule {
-            id: 1002,
-            name: "SQL Injection (UNION SELECT)",
-            pattern: b"UNION SELECT",
-            severity: "CRITICAL",
-        },
-        Rule {
-            id: 1003,
-            name: "XSS attempt (script tag)",
-            pattern: b"<script>",
-            severity: "HIGH",
-        },
-        Rule {
-            id: 1004,
-            name: "Path Traversal attempt",
-            pattern: b"../../",
-            severity: "HIGH",
-        },
-        Rule {
-            id: 1005,
-            name: "Command Injection (etc/passwd)",
-            pattern: b"/etc/passwd",
-            severity: "CRITICAL",
-        },
-        Rule {
-            id: 1006,
-            name: "Shellshock attempt",
-            pattern: b"() { :;};",
-            severity: "CRITICAL",
-        },
-    ]
+#[derive(Deserialize)]
+struct RuleFile {
+    rules: Vec<Rule>,
+}
+
+/// load rules from YAML file
+pub fn load(path: &str) -> Vec<Rule> {
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|e| panic!("Failed to read rules file '{}': {}", path, e));
+
+    let file: RuleFile = serde_yaml::from_str(&contents)
+        .unwrap_or_else(|e| panic!("Failed to parse rules file '{}': {}", path, e));
+
+    file.rules
 }

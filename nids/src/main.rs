@@ -7,7 +7,7 @@ use etherparse::SlicedPacket;
 fn main() {
     println!("Sentinel NIDS is starting..");
 
-    let rules = rules::load();
+    let rules = rules::load("rules.yaml");
     println!("Loaded {} detection rules.", rules.len());
 
     let mut cap = capture::open_default();

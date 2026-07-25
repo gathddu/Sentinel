@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 pcap = "2"
 etherparse = "0.16"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"

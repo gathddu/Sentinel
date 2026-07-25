@@ -1,0 +1,40 @@
+rules:
+  - id: 1001
+    name: "SQL Injection (OR-based)"
+    pattern: "' OR '1'='1"
+    severity: critical
+
+  - id: 1002
+    name: "SQL Injection (UNION SELECT)"
+    pattern: "UNION SELECT"
+    severity: critical
+
+  - id: 1003
+    name: "XSS attempt (script tag)"
+    pattern: "<script>"
+    severity: high
+
+  - id: 1004
+    name: "Path Traversal"
+    pattern: "../../"
+    severity: high
+
+  - id: 1005
+    name: "Command Injection (etc/passwd)"
+    pattern: "/etc/passwd"
+    severity: critical
+
+  - id: 1006
+    name: "Shellshock"
+    pattern: "() { :;};"
+    severity: critical
+
+  - id: 1007
+    name: "Log4Shell (JNDI lookup)"
+    pattern: "${jndi:"
+    severity: critical
+
+  - id: 1008
+    name: "PHP Remote Code Execution"
+    pattern: "system($_GET"
+    severity: critical
