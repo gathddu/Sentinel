@@ -4,6 +4,8 @@ mod engine;
 mod alert;
 
 use etherparse::SlicedPacket;
+use std::sync::mpsc;
+use std::thread;
 
 fn main() {
     println!("Sentinel NIDS is starting..");
@@ -11,16 +13,26 @@ fn main() {
     let rules = rules::load("rules.yaml");
     println!("Loaded {} detection rules.", rules.len());
 
-    let mut cap = capture::open_default();
-    println!("Monitoring traffic....\n");
+    let (tx, rx) = mpsc::sync_channel::<Vec<u8>>(10_000);
+
+    let capture_handle = thread::spawn(move || {
+        let mut cap = capture::open_default();
+        println!("Monitoring traffic....\n");
+
+        while let Ok(packet) = cap.next_packet() {
+            if tx.send(packet.data.to_vec()).is_err() {
+                break;
+            }
+        }
+    });
 
     let mut packet_count: u64 = 0;
     let mut alert_count: u64 = 0;
 
-    while let Ok(packet) = cap.next_packet() {
+    for data in rx {
         packet_count += 1;
 
-        let parsed = match SlicedPacket::from_ethernet(packet.data) {
+        let parsed = match SlicedPacket::from_ethernet(&data) {
             Ok(p) => p,
             Err(_) => continue,
         };
@@ -50,7 +62,7 @@ fn main() {
         };
 
         // run detection engine on raw packet bytes
-        let hits = engine::inspect(packet.data, &rules);
+        let hits = engine::inspect(&data, &rules);
 
         for rule in hits {
             alert_count += 1;
@@ -62,7 +74,7 @@ fn main() {
                 src_port,
                 &dst_ip,
                 dst_port,
-                packet.data.len(),
+                data.len(),
             );
             println!("{}", a.to_json());
         }
@@ -71,4 +83,6 @@ fn main() {
             println!("... {} packets processed, {} alerts fired", packet_count, alert_count);
         }
     }
+
+    capture_handle.join().unwrap();
 }
