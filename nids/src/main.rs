@@ -3,20 +3,40 @@ mod rules;
 mod engine;
 mod alert;
 
+use clap::Parser;
 use etherparse::SlicedPacket;
 use std::sync::mpsc;
 use std::thread;
 
+#[derive(Parser)]
+#[command(name = "sentinel-nids")]
+#[command(about = "Sentinel Network Intrustion Detection System")]
+struct Cli {
+    /// network interface to monitor
+    #[arg(short, long)]
+    interface: Option<String>,
+
+    /// path to the rules YAML
+    #[arg(short, long, default_value = "rules.yaml")]
+    rules: String,
+}
+
 fn main() {
+    let cli = Cli::parse();
+
     println!("Sentinel NIDS is starting..");
 
-    let rules = rules::load("rules.yaml");
+    let rules = rules::load(&cli.rules);
     println!("Loaded {} detection rules.", rules.len());
 
     let (tx, rx) = mpsc::sync_channel::<Vec<u8>>(10_000);
 
+    let interface = cli.interface.clone();
     let capture_handle = thread::spawn(move || {
-        let mut cap = capture::open_default();
+        let mut cap = match interface {
+            Some(name) => capture::open_interface(&name),
+            None => capture::open_default(),
+        };
         println!("Monitoring traffic....\n");
 
         while let Ok(packet) = cap.next_packet() {

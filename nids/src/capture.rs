@@ -16,3 +16,16 @@ pub fn open_default() -> Capture<Active> {
         .open()
         .expect("Failed to start capture")
 }
+
+/// specific network interface by name
+pub fn open_interface(name: &str) -> Capture<Active> {
+    println!("Listening on: {}", name);
+
+    Capture::from_device(name)
+        .expect("Failed to open device")
+        .snaplen(65535)
+        .promisc(true)
+        .timeout(1000)
+        .open()
+        .expect("Failed to start capture")
+}
