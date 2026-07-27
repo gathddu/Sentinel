@@ -29,6 +29,8 @@ fn main() {
     let rules = rules::load(&cli.rules);
     println!("Loaded {} detection rules.", rules.len());
 
+    let engine = engine::DetectionEngine::new(&rules);
+
     let (tx, rx) = mpsc::sync_channel::<Vec<u8>>(10_000);
 
     let interface = cli.interface.clone();
@@ -82,7 +84,7 @@ fn main() {
         };
 
         // run detection engine on raw packet bytes
-        let hits = engine::inspect(&data, &rules);
+        let hits = engine.inspect(&data, &rules);
 
         for rule in hits {
             alert_count += 1;
